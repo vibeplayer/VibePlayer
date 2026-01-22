@@ -181,41 +181,22 @@
 
         /* SCROLLING TITLE */
         /* SCROLLING TITLE - Aggiornato stile Codice 2 */
-.track-title-container {
-    overflow: hidden; 
-    white-space: nowrap; 
-    width: 100%; 
-    position: relative;
-    --fade-left: 0%; 
-    --fade-right: 85%;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black var(--fade-left), black var(--fade-right), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, black var(--fade-left), black var(--fade-right), transparent 100%);
-    transition: -webkit-mask-image 0.4s ease;
-}
-
-.track.playing .track-title-container.scrollable span { 
-    display: inline-block; 
-    animation: marquee-infinite 15s linear infinite; 
-    animation-delay: 2s; 
-}
-
-/* Animazione per far apparire il fade a sinistra solo quando il testo inizia a scorrere */
-.track.playing .track-title-container.scrollable { 
-    animation: mask-fade-dynamic 15s linear infinite; 
-    animation-delay: 2s; 
-}
-
-@keyframes marquee-infinite { 
-    0%, 10% { transform: translateX(0); } 
-    90%, 100% { transform: translateX(-50%); } 
-}
-
-@keyframes mask-fade-dynamic { 
-    0%, 3% { --fade-left: 0%; } 
-    15%, 85% { --fade-left: 10%; } 
-    90%, 100% { --fade-left: 0%; } 
-}
-
+ .track-title-container {
+            overflow: hidden; white-space: nowrap; width: 100%; position: relative;
+            -webkit-mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
+            mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
+            transition: -webkit-mask-image 0.4s ease;
+        }
+        .track-title-container {
+            --fade-left: 0%; --fade-right: 85%;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black var(--fade-left), black var(--fade-right), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black var(--fade-left), black var(--fade-right), transparent 100%);
+        }
+        .track.playing .track-title-container.scrollable span { display: inline-block; animation: marquee-infinite 15s linear infinite; animation-delay: 2s; }
+        .track.playing .track-title-container.scrollable { animation: mask-fade-dynamic 15s linear infinite; animation-delay: 2s; }
+        @keyframes marquee-infinite { 0%, 10% { transform: translateX(0); } 90%, 100% { transform: translateX(-50%); } }
+        @keyframes mask-fade-dynamic { 0%, 3% { --fade-left: 0%; } 15%, 85% { --fade-left: 10%; } 90%, 100% { --fade-left: 0%; } }
+        
         /* --- CUSTOM MODAL --- */
         #custom-modal {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -727,14 +708,13 @@
         }
 
         function playNewSong(song) {
-            // Inizializza audio context (anche se barre sono spente, serve per il glow)
             if(!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = audioCtx.createAnalyser();
                 source = audioCtx.createMediaElementSource(audio);
                 source.connect(analyser);
                 analyser.connect(audioCtx.destination);
-                startVisualizerLoop();
+                drawVisualizer();
             }
 
             document.querySelectorAll('.track').forEach(t => {
@@ -754,13 +734,21 @@
                 currentLi.classList.add('playing');
                 const i = currentLi.querySelector('.play-status-icon i');
                 if(i) i.className = "fas fa-pause";
+
                 const container = currentLi.querySelector('.track-title-container');
                 const span = container.querySelector('span');
                 if(!span.dataset.original) span.dataset.original = song.title;
                 const originalTitle = span.dataset.original;
                 span.innerText = originalTitle;
                 container.classList.remove('scrollable');
-                setTimeout(() => { if (span.offsetWidth > container.offsetWidth) { span.innerText = originalTitle + "\u00A0\u00A0\u00A0" + originalTitle + "\u00A0\u00A0\u00A0"; container.classList.add('scrollable'); } }, 100);
+
+                setTimeout(() => {
+                    if (span.offsetWidth > container.offsetWidth) {
+                        const separator = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"; 
+                        span.innerText = originalTitle + separator + originalTitle + separator;
+                        container.classList.add('scrollable');
+                    }
+                }, 100);
             }
             
             audio.src = song.url;
