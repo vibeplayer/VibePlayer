@@ -700,7 +700,39 @@
                 else sortedSongs.forEach(song => createTrackElement(song, playlistEl));
             }
         }
-
+        function drawVisualizer() {
+            const canvas = document.getElementById('visualizer');
+            const ctx = canvas.getContext('2d');
+            const bgGlow = document.getElementById('bg-glow');
+            const ratio = window.devicePixelRatio || 1;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            canvas.width = width * ratio;
+            canvas.height = height * ratio;
+            ctx.scale(ratio, ratio);
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            function render() {
+                requestAnimationFrame(render);
+                analyser.getByteFrequencyData(dataArray);
+                ctx.clearRect(0, 0, width, height);
+                let bassSum = 0; for(let i=0; i<5; i++) bassSum += dataArray[i];
+                let avgBass = bassSum / 5;
+                if (avgBass > 10 && !audio.paused) {
+                    bgGlow.style.opacity = (avgBass / 255) * 1.2;
+                    bgGlow.style.transform = `translate(-50%, -50%) scale(${1 + (avgBass / 200)})`;
+                } else { bgGlow.style.opacity = 0; }
+                let x = 0;
+                let barWidth = (width / 64);
+                for(let i = 0; i < 64; i++) {
+                    let h = (dataArray[i] / 255) * height;
+                    ctx.fillStyle = `rgb(59, 130, 246)`;
+                    ctx.fillRect(x, height - h, barWidth - 1, h);
+                    x += barWidth;
+                }
+            }
+            render();
+        }
         // --- PLAYER LOGIC ---
         function handleTrackClick(song) {
             if (currentUrl === song.url) togglePlayPause(song.id);
