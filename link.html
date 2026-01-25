@@ -3,22 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Login App</title>
-    <!-- Supabase -->
+    <title>Login App Pro</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Icone & Font -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* STILE ORIGINALE DARK APP */
             --bg-color: #0d0d0f; 
             --text-main: #ffffff;
             --text-sub: #888888;
             --accent: #3b82f6; 
             --accent-glow: rgba(59, 130, 246, 0.4);
             --input-bg: #1a1a1d;
+            --card-bg: #16161a;
             --error: #ef4444;
         }
 
@@ -30,232 +28,177 @@
             height: 100vh;
             margin: 0;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             overflow: hidden;
         }
 
-        /* Frame Invisibile Full Screen */
         .app-frame {
             width: 100%;
-            height: 100%;
-            max-width: 500px;
-            padding: 30px;
+            max-width: 450px;
+            padding: 20px 30px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             position: relative;
         }
 
-        /* Testi */
-        h2 { 
-            font-size: 32px; font-weight: 800; margin: 0 0 10px 0; 
-            text-align: center;
-        }
-        .highlight-name { color: var(--accent); }
-        p { color: var(--text-sub); text-align: center; margin-bottom: 40px; font-size: 16px; }
-
-        /* Input */
-        .input-wrapper { margin-bottom: 25px; }
-        input[type="text"] {
-            width: 100%;
-            padding: 20px;
-            background: var(--input-bg);
-            border: 1px solid #333;
-            border-radius: 18px;
-            color: white;
-            font-size: 18px;
-            outline: none;
-            transition: 0.3s;
-            text-align: center;
-        }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(59, 130, 246, 0.1); }
-
-        /* Buttons */
-        .btn {
-            width: 100%;
-            padding: 20px;
-            border: none;
-            border-radius: 18px;
-            background: var(--accent);
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 10px 30px var(--accent-glow);
-            transition: transform 0.2s;
-            margin-top: auto; /* Spinge in basso nei layout flex */
-        }
-        .btn:active { transform: scale(0.96); }
-
-        /* PIN UI */
-        .pin-wrapper { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; }
-        .pin-digit {
-            width: 65px; height: 75px;
-            background: var(--input-bg);
-            border: 1px solid #333;
-            border-radius: 16px;
-            font-size: 32px;
-            color: white;
-            text-align: center;
-            outline: none;
-            transition: 0.3s;
-        }
-        .pin-digit:focus { border-color: var(--accent); transform: translateY(-5px); }
-
-        /* --- LAYOUT BENVENUTO (RICHIESTO) --- */
-        .welcome-layout {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100%;
-            justify-content: space-between; /* Top, Center, Bottom */
-            padding-top: 50px;
-            padding-bottom: 20px;
-        }
-
-        /* Avatar Centrale */
-        .avatar-section {
-            position: relative;
-            margin: 20px 0;
-        }
-
-        .avatar-circle {
-            width: 180px; height: 180px;
-            border-radius: 50%;
-            background: #111;
-            border: 4px solid var(--input-bg);
-            box-shadow: 0 15px 50px rgba(0,0,0,0.6);
-            position: relative;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .avatar-img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-        }
-
-        .pencil-icon {
-            position: absolute; 
-            bottom: 10px; right: 10px;
-            background: var(--accent);
-            width: 50px; height: 50px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            border: 5px solid var(--bg-color);
-            color: white;
-            font-size: 20px;
-            pointer-events: none; /* Clicca attraverso */
-        }
-
-        /* Mini Avatar Login */
-        .login-mini-avatar {
-            width: 90px; height: 90px;
-            border-radius: 50%;
-            margin: 0 auto 20px auto;
-            border: 3px solid var(--accent);
-            object-fit: cover;
-            display: block;
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-
-        /* Utilities */
-        .hidden { display: none !important; }
-        .error-msg { color: var(--error); text-align: center; margin-bottom: 20px; min-height: 20px; font-weight: 600; }
-        .upload-status { font-size: 13px; color: #888; text-align: center; margin-top: 10px; height: 20px; }
-
-        /* Animazioni */
-        .step-section { width: 100%; animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+        /* --- ANIMAZIONI --- */
+        @keyframes viewEnter {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .shake { animation: shake 0.4s ease-in-out; }
-        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-10px);} 75% {transform: translateX(10px);} }
 
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .step-section { width: 100%; animation: viewEnter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .shake-anim { animation: shake 0.3s ease-in-out; }
+
+        /* --- LISTA ACCOUNT --- */
+        .account-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .account-item {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #222;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .account-item:active { transform: scale(0.96); background: #1c1c21; }
+
+        .acc-avatar {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 2px solid var(--accent);
+        }
+
+        .acc-name { flex-grow: 1; font-size: 18px; font-weight: 600; }
+
+        .acc-remove {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            color: #444; font-size: 18px;
+            transition: color 0.2s;
+        }
+        .acc-remove:hover { color: var(--error); }
+
+        /* --- UI ELEMENTI --- */
+        h2 { font-size: 30px; font-weight: 800; margin: 0 0 10px 0; text-align: center; }
+        p { color: var(--text-sub); text-align: center; margin-bottom: 30px; font-size: 16px; }
+        .highlight-name { color: var(--accent); }
+
+        input[type="text"] {
+            width: 100%; padding: 20px; background: var(--input-bg);
+            border: 1px solid #333; border-radius: 18px; color: white;
+            font-size: 18px; text-align: center; outline: none;
+        }
+
+        .btn {
+            width: 100%; padding: 20px; border: none; border-radius: 18px;
+            background: var(--accent); color: white; font-size: 18px;
+            font-weight: 600; cursor: pointer; margin-top: 10px;
+            box-shadow: 0 8px 25px var(--accent-glow);
+            transition: transform 0.2s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-ghost { background: transparent; border: 1px solid #333; box-shadow: none; color: #888; margin-top: 15px; }
+
+        /* --- PIN --- */
+        .pin-wrapper { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; }
+        .pin-digit {
+            width: 60px; height: 75px; background: var(--input-bg);
+            border: 1px solid #333; border-radius: 16px; font-size: 32px;
+            color: white; text-align: center; outline: none;
+            transition: all 0.3s;
+        }
+        .pin-digit:focus { border-color: var(--accent); transform: translateY(-4px); }
+
+        /* --- WELCOME / AVATAR --- */
+        .welcome-layout { display: flex; flex-direction: column; align-items: center; gap: 25px; padding: 20px 0; }
+        .avatar-main { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); position: relative; cursor: pointer; }
+        .avatar-main img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .pencil-btn { position: absolute; bottom: 5px; right: 5px; background: var(--accent); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid var(--bg-color); color: white; }
+        
+        .login-mini-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; border: 3px solid var(--accent); object-fit: cover; display: block; }
+
+        .hidden { display: none !important; }
+        .error-msg { color: var(--error); text-align: center; height: 20px; margin-bottom: 10px; font-size: 14px; font-weight: 600; }
     </style>
 </head>
 <body>
 
 <div class="app-frame">
 
-    <!-- STEP 1: USERNAME -->
-    <div id="view-username" class="step-section">
-        <div style="margin-top: auto; margin-bottom: auto;">
-            <h2>Benvenuto</h2>
-            <p>Inserisci il tuo nome per iniziare</p>
-            
-            <div class="input-wrapper">
-                <input type="text" id="inp-username" placeholder="Nome Utente" autocomplete="off" maxlength="15">
-            </div>
-            
-            <div id="err-username" class="error-msg"></div>
-        </div>
-        <button class="btn" onclick="checkUser()" id="btn-check">Avanti</button>
+    <div id="view-accounts" class="step-section hidden">
+        <h2>Bentornato</h2>
+        <p>Seleziona il tuo profilo</p>
+        <div id="account-container" class="account-list"></div>
+        <button class="btn btn-ghost" onclick="changeView('user')">Usa un altro nome</button>
     </div>
 
-    <!-- STEP 2: PIN -->
+    <div id="view-user" class="step-section">
+        <h2>Benvenuto</h2>
+        <p>Inserisci il tuo nome utente</p>
+        <input type="text" id="inp-username" placeholder="Username" autocomplete="off" maxlength="15">
+        <div id="err-user" class="error-msg"></div>
+        <button class="btn" onclick="processUser()">Continua</button>
+        <button id="btn-back-list" class="btn btn-ghost hidden" onclick="initApp()">Torna alla lista</button>
+    </div>
+
     <div id="view-pin" class="step-section hidden">
-        <div style="margin-top: auto; margin-bottom: auto;">
-            <!-- Foto utente se login -->
-            <img src="" id="pin-avatar-show" class="login-mini-avatar hidden">
-            
-            <h2 id="txt-pin-title">PIN</h2>
-            <p id="txt-pin-desc">Inserisci codice</p>
-
-            <div class="pin-wrapper" id="pin-container">
-                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
-                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
-                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
-                <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
-            </div>
-
-            <div id="err-pin" class="error-msg"></div>
+        <img src="" id="pin-avatar" class="login-mini-avatar hidden">
+        <h2 id="pin-title">PIN</h2>
+        <p id="pin-desc">Inserisci codice</p>
+        <div class="pin-wrapper" id="pin-box">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
         </div>
-        
-        <button class="btn" onclick="submitPin()" id="btn-pin-confirm">Conferma</button>
+        <div id="err-pin" class="error-msg"></div>
+        <button class="btn" onclick="processPin()">Conferma</button>
     </div>
 
-    <!-- STEP 3: SCHERMATA BENVENUTO (Layout Richiesto) -->
-    <div id="view-welcome" class="step-section hidden" style="height: 100%;">
+    <div id="view-welcome" class="step-section hidden">
         <div class="welcome-layout">
-            
-            <!-- SOPRA: Benvenuto Nome -->
-            <div style="text-align: center;">
-                <h2>Benvenuto<br><span id="lbl-welcome-name" class="highlight-name">...</span></h2>
-                <p style="margin-bottom: 0;">Configurazione completata</p>
+            <div style="text-align:center">
+                <h2>Benvenuto, <span id="welcome-name" class="highlight-name">...</span></h2>
+                <p>Configurazione completata!</p>
             </div>
-
-            <!-- CENTRO: Icona con matita -->
-            <div class="avatar-section">
-                <div class="avatar-circle" onclick="document.getElementById('file-upload').click()">
-                    <img src="" id="img-welcome-preview" class="avatar-img">
-                    <div class="pencil-icon"><i class="fas fa-pen"></i></div>
-                </div>
-                <div id="upload-status" class="upload-status">Clicca per cambiare</div>
+            <div class="avatar-main" onclick="document.getElementById('file-input').click()">
+                <img src="" id="welcome-img-preview">
+                <div class="pencil-btn"><i class="fas fa-camera"></i></div>
             </div>
-
-            <!-- Input Nascosto -->
-            <input type="file" id="file-upload" accept="image/*" hidden onchange="uploadImage(this)">
-
-            <!-- SOTTO: Pulsante Continua -->
-            <button class="btn" onclick="finalizeAndGoHome()" id="btn-final">Continua</button>
-        
+            <input type="file" id="file-input" hidden accept="image/*" onchange="handleUpload(this)">
+            <button class="btn" onclick="finalizeSetup(true)" id="btn-final">Continua</button>
         </div>
     </div>
 
 </div>
 
 <script>
-    // --- SUPABASE SETUP ---
     const SUPABASE_URL = 'https://mgofkzcnppsydkknbuhw.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_2M3gFEEjJLz2y_uHTUodMQ_XygN_O7s'; 
-    const { createClient } = supabase;
-    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // --- VARIABILI DI STATO ---
+    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+
     let state = {
         username: '',
         isLogin: false,
@@ -265,181 +208,184 @@
         hasChangedAvatar: false
     };
 
-    // --- ELEMENTI DOM ---
-    const els = {
-        pinInputs: document.querySelectorAll('.pin-digit'),
-        views: {
-            user: document.getElementById('view-username'),
-            pin: document.getElementById('view-pin'),
-            welcome: document.getElementById('view-welcome')
+    const pinInputs = document.querySelectorAll('.pin-digit');
+
+    function initApp() {
+        const saved = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+        if (saved.length > 0) {
+            renderAccounts(saved);
+            changeView('accounts');
+        } else {
+            changeView('user');
         }
-    };
+    }
 
-    // --- LOGICA INPUT PIN ---
-    els.pinInputs.forEach((inp, i) => {
-        inp.addEventListener('input', (e) => {
-            if(e.target.value && i < 3) els.pinInputs[i+1].focus();
-        });
-        inp.addEventListener('keydown', (e) => {
-            if(e.key === 'Backspace' && !e.target.value && i > 0) els.pinInputs[i-1].focus();
-        });
-    });
+    function renderAccounts(accounts) {
+        const container = document.getElementById('account-container');
+        container.innerHTML = '';
+        accounts.forEach(acc => {
+            const item = document.createElement('div');
+            item.className = 'account-item';
+            item.innerHTML = `
+                <img src="${acc.avatar}" class="acc-avatar">
+                <div class="acc-name">${acc.username}</div>
+                <div class="acc-remove"><i class="fas fa-times"></i></div>`;
+            
+            item.onclick = (e) => {
+                if (e.target.closest('.acc-remove')) return;
+                handleQuickAccess(acc);
+            };
 
-    // --- STEP 1: VERIFICA UTENTE ---
-    async function checkUser() {
+            item.querySelector('.acc-remove').onclick = (e) => {
+                e.stopPropagation();
+                removeAcc(acc.username);
+            };
+            container.appendChild(item);
+        });
+    }
+
+    // LOGICA ACCESSO ISTANTANEO (2 GIORNI)
+    async function handleQuickAccess(acc) {
+        const now = Date.now();
+        const lastPinTime = acc.lastPinTime || 0;
+
+        state.username = acc.username;
+        state.avatarUrl = acc.avatar;
+        state.isLogin = true;
+
+        if (now - lastPinTime < TWO_DAYS_MS) {
+            // ACCESSO DIRETTO
+            finalizeSetup(false); 
+        } else {
+            // RICHIEDI PIN
+            const { data } = await sb.from('users').select('pin').eq('username', acc.username).single();
+            if(data) state.dbPin = data.pin;
+            document.getElementById('pin-avatar').src = acc.avatar;
+            document.getElementById('pin-avatar').classList.remove('hidden');
+            changeView('pin');
+        }
+    }
+
+    async function processUser() {
         const name = document.getElementById('inp-username').value.trim();
-        const btn = document.getElementById('btn-check');
-        const err = document.getElementById('err-username');
-
-        if(name.length < 3) return showErr(err, "Nome troppo corto");
-        
-        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
-        
+        if(name.length < 3) return showErr('err-user', "Nome corto");
         try {
             const { data } = await sb.from('users').select('*').eq('username', name).maybeSingle();
             state.username = name;
-
             if(data) {
-                // LOGIN
                 state.isLogin = true;
                 state.dbPin = data.pin;
                 state.avatarUrl = data.avatar_url || `https://ui-avatars.com/api/?name=${name}`;
-                
-                // Mostra avatar nel PIN
-                document.getElementById('pin-avatar-show').src = state.avatarUrl;
-                document.getElementById('pin-avatar-show').classList.remove('hidden');
+                document.getElementById('pin-avatar').src = state.avatarUrl;
+                document.getElementById('pin-avatar').classList.remove('hidden');
             } else {
-                // REGISTRAZIONE
                 state.isLogin = false;
-                state.avatarUrl = `https://api.dicebear.com/9.x/dylan/svg?seed=${Math.random()}`;
-                
-                document.getElementById('pin-avatar-show').classList.add('hidden');
+                state.avatarUrl = `https://api.dicebear.com/9.x/dylan/svg?seed=${name}`;
+                document.getElementById('pin-avatar').classList.add('hidden');
             }
             changeView('pin');
-        } catch(e) {
-            console.error(e);
-            showErr(err, "Errore connessione");
-        }
-        btn.innerHTML = "Avanti";
+        } catch(e) { showErr('err-user', "Errore connessione"); }
     }
 
-    // --- STEP 2: VERIFICA PIN ---
-    function submitPin() {
+    function processPin() {
         let pin = "";
-        els.pinInputs.forEach(i => pin += i.value);
-        const err = document.getElementById('err-pin');
-
-        if(pin.length !== 4) return showErr(err, "Inserisci 4 cifre");
+        pinInputs.forEach(i => pin += i.value);
+        if(pin.length !== 4) return showErr('err-pin', "4 cifre");
 
         if(state.isLogin) {
             if(pin === state.dbPin) {
-                prepareWelcome();
+                showWelcome();
             } else {
-                showErr(err, "PIN Errato");
-                document.getElementById('pin-container').classList.add('shake');
-                setTimeout(()=> document.getElementById('pin-container').classList.remove('shake'), 500);
-                els.pinInputs.forEach(i => i.value = '');
-                els.pinInputs[0].focus();
+                showErr('err-pin', "PIN Errato");
+                document.getElementById('pin-box').classList.add('shake-anim');
+                setTimeout(() => document.getElementById('pin-box').classList.remove('shake-anim'), 400);
+                resetPinFields();
             }
         } else {
             state.tempPin = pin;
-            prepareWelcome();
+            showWelcome();
         }
     }
 
-    function prepareWelcome() {
-        document.getElementById('lbl-welcome-name').innerText = state.username;
-        document.getElementById('img-welcome-preview').src = state.avatarUrl;
+    function showWelcome() {
+        document.getElementById('welcome-name').innerText = state.username;
+        document.getElementById('welcome-img-preview').src = state.avatarUrl;
         changeView('welcome');
     }
 
-    // --- STEP 3: UPLOAD (CON FIX INVALID KEY) ---
-    async function uploadImage(input) {
-        if (!input.files || input.files.length === 0) return;
-        
+    async function handleUpload(input) {
+        if (!input.files[0]) return;
         const file = input.files[0];
-        const status = document.getElementById('upload-status');
-        const img = document.getElementById('img-welcome-preview');
-        
-        status.innerText = "Caricamento...";
-        img.style.opacity = "0.5";
-
-        try {
-            // FIX: Genera nome casuale per evitare errori "Invalid Key"
-            const ext = file.name.split('.').pop();
-            const safeName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${ext}`;
-
-            // Upload
-            const { error: uploadError } = await sb.storage
-                .from('avatars')
-                .upload(safeName, file);
-
-            if (uploadError) throw uploadError;
-
-            // Get URL
-            const { data: publicData } = sb.storage
-                .from('avatars')
-                .getPublicUrl(safeName);
-
-            state.avatarUrl = publicData.publicUrl;
-            state.hasChangedAvatar = true;
-
-            img.src = state.avatarUrl;
-            status.innerText = "Foto aggiornata!";
-            status.style.color = "#4ade80";
-            
-        } catch (err) {
-            console.error(err);
-            status.innerText = "Errore Upload (Bucket pubblico?)";
-            status.style.color = "#ef4444";
-        } finally {
-            img.style.opacity = "1";
-        }
+        const fileName = `avatars/${Date.now()}_${state.username}`;
+        const { data: uploadData } = await sb.storage.from('avatars').upload(fileName, file);
+        const { data } = sb.storage.from('avatars').getPublicUrl(fileName);
+        state.avatarUrl = data.publicUrl;
+        state.hasChangedAvatar = true;
+        document.getElementById('welcome-img-preview').src = state.avatarUrl;
     }
 
-    // --- STEP 4: SALVA E VAI A HOME ---
-    async function finalizeAndGoHome() {
-        const btn = document.getElementById('btn-final');
-        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
-        
-        // Database Update
+    async function finalizeSetup(isNewPinProvided) {
         if (!state.isLogin) {
-            await sb.from('users').insert([{
-                username: state.username,
-                pin: state.tempPin,
-                avatar_url: state.avatarUrl
-            }]);
+            await sb.from('users').insert([{ username: state.username, pin: state.tempPin, avatar_url: state.avatarUrl }]);
         } else if (state.hasChangedAvatar) {
-            await sb.from('users').update({ avatar_url: state.avatarUrl })
-                .eq('username', state.username);
+            await sb.from('users').update({ avatar_url: state.avatarUrl }).eq('username', state.username);
         }
 
-        // Local Storage
-        localStorage.setItem('userSession', JSON.stringify({
-            username: state.username,
-            avatar: state.avatarUrl
-        }));
-
-        setTimeout(() => window.location.href = 'index.html', 500);
-    }
-
-    // --- UTILS ---
-    function changeView(name) {
-        Object.values(els.views).forEach(v => v.classList.add('hidden'));
-        els.views[name].classList.remove('hidden');
+        let accounts = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+        const existing = accounts.find(a => a.username === state.username);
         
-        if(name === 'pin') {
-            document.getElementById('txt-pin-title').innerText = state.isLogin ? "Bentornato" : "Crea PIN";
-            els.pinInputs.forEach(i => i.value = '');
-            els.pinInputs[0].focus();
+        // Se l'utente ha inserito il PIN o è nuovo, aggiorno il timestamp del PIN
+        const lastPinTime = isNewPinProvided ? Date.now() : (existing ? existing.lastPinTime : Date.now());
+
+        accounts = accounts.filter(a => a.username !== state.username);
+        accounts.unshift({ 
+            username: state.username, 
+            avatar: state.avatarUrl, 
+            lastPinTime: lastPinTime 
+        });
+        localStorage.setItem('app_accounts', JSON.stringify(accounts.slice(0, 8)));
+
+        localStorage.setItem('userSession', JSON.stringify({ username: state.username, avatar: state.avatarUrl }));
+        window.location.href = 'index.html';
+    }
+
+    function changeView(view) {
+        document.querySelectorAll('.step-section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('view-' + view).classList.remove('hidden');
+        if(view === 'user') {
+            const saved = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+            if(saved.length > 0) document.getElementById('btn-back-list').classList.remove('hidden');
+        }
+        if(view === 'pin') {
+            document.getElementById('pin-title').innerText = state.isLogin ? "Bentornato" : "Crea PIN";
+            resetPinFields();
         }
     }
 
-    function showErr(el, msg) {
+    function showErr(id, msg) {
+        const el = document.getElementById(id);
         el.innerText = msg;
-        setTimeout(() => el.innerText = "", 2000);
+        setTimeout(() => el.innerText = "", 2500);
     }
-</script>
 
+    function resetPinFields() {
+        pinInputs.forEach(i => i.value = '');
+        pinInputs[0].focus();
+    }
+
+    function removeAcc(user) {
+        let accounts = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+        accounts = accounts.filter(a => a.username !== user);
+        localStorage.setItem('app_accounts', JSON.stringify(accounts));
+        initApp();
+    }
+
+    pinInputs.forEach((inp, i) => {
+        inp.addEventListener('input', (e) => { if(e.target.value && i < 3) pinInputs[i+1].focus(); });
+        inp.addEventListener('keydown', (e) => { if(e.key === 'Backspace' && !e.target.value && i > 0) pinInputs[i-1].focus(); });
+    });
+
+    initApp();
+</script>
 </body>
 </html>
