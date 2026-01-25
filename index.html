@@ -20,24 +20,55 @@
     --p-min: 140px;             /* Forza la posizione */
 }
 
+* {
+    /* Rimuove il rettangolo blu al tocco su mobile */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; /* Impedisce il menu contestuale su pressione lunga */
+}
+
+/* Se vuoi essere ancora più specifico per i pulsanti */
+.pill, .action-box, .btn-skip, .play-btn-large, .toggle-btn, .track {
+    outline: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            display: flex; flex-direction: column;
-            height: 100vh; overflow: hidden; position: relative;
-            user-select: none; -webkit-tap-highlight-color: transparent;
-        }
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    display: flex; 
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Fondamentale */
+    position: fixed; /* Impedisce rimbalzi su mobile */
+}
 
-        /* --- BACKGROUND --- */
-        #bg-glow {
-            position: absolute; top: 50%; left: 50%; width: 100vw; height: 100vh;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, rgba(13, 13, 15, 0) 70%);
-            transform: translate(-50%, -50%) scale(1); z-index: -1; pointer-events: none; opacity: 0;
-            transition: transform 0.1s ease-out;
-        }
+#bg-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* Area di calcolo enorme per evitare clipping */
+    width: 150vw; 
+    height: 150vh;
+    /* Il gradiente deve morire MOLTO prima della fine dell'elemento (es. al 40%) */
+    background: radial-gradient(
+        circle, 
+        rgba(59, 130, 246, 0.18) 0%, 
+        rgba(59, 130, 246, 0.05) 25%, 
+        transparent 50%
+    );
+    transform: translate(-50%, -50%) scale(1);
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0;
+    /* Usa 'transform' per l'animazione, è più fluido */
+    transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1);
+    will-change: transform;
+}
+
+
 
         /* --- UI ELEMENTS --- */
         .top-bar {
@@ -720,7 +751,7 @@
                 let avgBass = bassSum / 5;
                 if (avgBass > 10 && !audio.paused) {
                     bgGlow.style.opacity = (avgBass / 255) * 1.2;
-                    bgGlow.style.transform = `translate(-50%, -50%) scale(${1 + (avgBass / 200)})`;
+                    bgGlow.style.transform = `translate(-50%, -50%) scale(${1 + (avgBass / 600)})`;
                 } else { bgGlow.style.opacity = 0; }
                 let x = 0;
                 let barWidth = (width / 64);
@@ -1035,7 +1066,10 @@
             const ctx = canvas.getContext('2d');
             const bgGlow = document.getElementById('bg-glow');
             const ratio = window.devicePixelRatio || 1;
-            
+            // Usiamo Math.min per dare un tetto massimo alla grandezza (es. non oltre 1.5)
+let scaleValue = 1 + (avgBass / 400); 
+bgGlow.style.transform = `translate(-50%, -50%) scale(${Math.min(scaleValue, 1.3)})`;
+
             // Inizializza array dati
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
@@ -1047,14 +1081,24 @@
                 analyser.getByteFrequencyData(dataArray);
 
                 // 2. Calcola Luci Background (GLOW)
-                let bassSum = 0; for(let i=0; i<5; i++) bassSum += dataArray[i];
-                let avgBass = bassSum / 5;
-                if (avgBass > 10 && !audio.paused) {
-                    bgGlow.style.opacity = (avgBass / 255) * 1.2;
-                    bgGlow.style.transform = `translate(-50%, -50%) scale(${1 + (avgBass / 200)})`;
-                } else { 
-                    bgGlow.style.opacity = 0; 
-                }
+                // --- Calcola Luci Background (GLOW) ---
+let bassSum = 0; 
+for(let i=0; i<5; i++) bassSum += dataArray[i];
+let avgBass = bassSum / 5;
+
+if (avgBass > 10 && !audio.paused) {
+    // 1. Opacità più contenuta
+    bgGlow.style.opacity = Math.min((avgBass / 255), 0.8);
+    
+    // 2. SCALA LIMITATA: 
+    // Dividendo per 600 l'espansione è molto più piccola.
+    // Math.min(..., 1.2) assicura che non superi mai il 120% della dimensione base.
+    let targetScale = 1 + (avgBass / 600);
+    bgGlow.style.transform = `translate(-50%, -50%) scale(${Math.min(targetScale, 1.2)})`;
+} else { 
+    bgGlow.style.opacity = 0; 
+}
+
 
                 // 3. Disegna le barre SOLO se abilitato
                 if (enableVisualizerBars) {
