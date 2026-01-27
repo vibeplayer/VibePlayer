@@ -161,7 +161,24 @@
     50% { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(255, 49, 49, 0.8)); }
     100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255, 49, 49, 0.4)); }
 }
+/* Badge Orologio Blu Animato */
+.clock-icon {
+    color: #3b82f6; /* Blu */
+    margin-left: 6px;
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+    animation: clock-spin 3s linear infinite;
+}
 
+@keyframes clock-spin {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(10deg); }
+    40% { transform: rotate(-10deg); }
+    60% { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+        0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.4)); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(259, 130, 246, 0.8)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.4)); }
+}
 
         /* --- UI ELEMENTS --- */
         .top-bar {
@@ -673,22 +690,29 @@
         function logout() { localStorage.removeItem('userSession'); location.reload(); }
 
         async function loadUserData() {
-            const { data } = await sb.from('user_settings').select('*').eq('username', session.username).single();
+            const { data } = await sb.from('users').select('*').eq('username', session.username).single();
             if(data) { localPlaylists = data.playlists || {}; localFavorites = data.favorites || []; } 
             else { saveUserData(); }
         }
         async function saveUserData() {
-            await sb.from('user_settings').upsert({ username: session.username, playlists: localPlaylists, favorites: localFavorites });
+            await sb.from('users').upsert({ username: session.username, playlists: localPlaylists, favorites: localFavorites });
         }
-        let absoluteMaxSongs = 0; 
+let absoluteMaxSongs = 0;
+let absoluteMaxSeconds = 0; // Nuova variabile per il record di tempo
 
 async function loadSongsFromSupabase() {
-    // 1. Recupera TUTTI i proprietari per calcolare il record assoluto
-    const { data: globalData } = await sb.from('songs_db').select('owner');
-    if (globalData) {
+    // 1. Recupera TUTTI i dati globali per i record
+    const { data: globalStats } = await sb.from('users').select('username, listening_seconds');
+    const { data: globalSongs } = await sb.from('songs_db').select('owner');
+
+    if (globalSongs) {
         const counts = {};
-        globalData.forEach(s => counts[s.owner] = (counts[s.owner] || 0) + 1);
+        globalSongs.forEach(s => counts[s.owner] = (counts[s.owner] || 0) + 1);
         absoluteMaxSongs = Math.max(...Object.values(counts), 0);
+    }
+    
+    if (globalStats) {
+        absoluteMaxSeconds = Math.max(...globalStats.map(u => u.listening_seconds || 0), 0);
     }
 
     // 2. Carica i brani dell'utente attuale
@@ -700,14 +724,32 @@ async function loadSongsFromSupabase() {
     if(userSongs) { 
         allSongs = userSongs; 
         renderList(); 
-        // 3. Aggiorna l'header con le icone (senza numero brani)
-        updateHeaderWithBadges();
+        await updateHeaderWithBadges();
     }
 }
 
-function updateHeaderWithBadges() {
+async function updateHeaderWithBadges() {
+    // Recuperiamo i secondi attuali dell'utente
+    const { data } = await sb.from('users').select('listening_seconds').eq('username', session.username).single();
+    const userSeconds = data ? data.listening_seconds : 0;
+
     const isCreator = session.username === "୧ ‧₊˚Dany🍂☁️";
-    const isTop = (allSongs.length === absoluteMaxSongs && absoluteMaxSongs > 0);
+    const isTopSongs = (allSongs.length === absoluteMaxSongs && absoluteMaxSongs > 0);
+    const isTopListener = (userSeconds === absoluteMaxSeconds && absoluteMaxSeconds > 0);
+
+    document.getElementById('user-header').innerHTML = `
+        <div class="user-section">
+            <img src="${session.avatar}" class="avatar-small">
+            <span class="user-name">
+                ${session.username}
+                ${isCreator ? '<i class="fas fa-crown crown"></i>' : ''}
+                ${isTopSongs ? '<i class="fas fa-music music-note"></i>' : ''}
+                ${isTopListener ? '<i class="fas fa-clock clock-icon"></i>' : ''}
+            </span>
+            <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+        </div>`;
+
+
 
     document.getElementById('user-header').innerHTML = `
         <div class="user-section">
@@ -1268,6 +1310,31 @@ setInterval(showAppPopup, 300000);
         seekSlider.oninput = () => seekSlider.dragging = true;
         seekSlider.onchange = () => { audio.currentTime = seekSlider.value; seekSlider.dragging = false; };
         function formatTime(s) { const m=Math.floor(s/60),sec=Math.floor(s%60); return `${m}:${sec<10?'0'+sec:sec}`; }
+        let listeningInterval;
+
+audio.onplay = () => {
+    // Avvia il contatore ogni secondo
+    listeningInterval = setInterval(async () => {
+        if (!audio.paused && !audio.muted) {
+            // Aggiornamento locale (opzionale per performance)
+            // Aggiornamento database
+            const { data, error } = await sb.rpc('increment_seconds', { 
+                user_id: session.username 
+            }); 
+            
+            // Nota: Se non vuoi usare RPC, usa questo:
+            /*
+            await sb.from('users')
+               .update({ listening_seconds: userSeconds + 1 })
+               .eq('username', session.username);
+            */
+        }
+    }, 1000);
+};
+
+audio.onpause = () => clearInterval(listeningInterval);
+audio.onended = () => clearInterval(listeningInterval);
+
 
         function startVisualizerLoop() {
             const canvas = document.getElementById('visualizer');
