@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diventa una Leggenda - VibePlayer</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000;
+            --accent: #007aff;
+            --gold: #FFD700;
+            --silver: #C0C0C0;
+            --bronze: #CD7F32;
+            --card: #111;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, #666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: #a1a1a6;
+            font-size: 18px;
+            max-width: 500px;
+            margin-bottom: 40px;
+        }
+
+        .cta-button {
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 20px;
+            box-shadow: 0 0 25px rgba(0, 122, 255, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-block;
+            margin-bottom: 60px;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 122, 255, 0.6);
+        }
+
+        .leaderboard-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        .top-three {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .rank-card {
+            background: var(--card);
+            padding: 15px 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #222;
+        }
+
+        .rank-info { display: flex; align-items: center; gap: 15px; }
+        .rank-number { font-weight: 900; font-size: 20px; width: 30px; }
+        .rank-name { font-weight: 700; font-size: 16px; }
+        .rank-count { color: #007aff; font-size: 14px; font-weight: 900; }
+
+        .pos-1 { border-color: var(--gold); background: linear-gradient(145deg, #111, #1a1600); }
+        .pos-1 .rank-number { color: var(--gold); }
+        .pos-1 .fa-clock { color: #007aff; animation: pulse 2s infinite; margin-left: 8px; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .pos-2 .rank-number { color: var(--silver); }
+        .pos-3 .rank-number { color: var(--bronze); }
+
+        #loading { color: #444; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="hero">
+        <h1>Vivi la Musica.</h1>
+        <p>Ogni secondo conta. Ascolta i tuoi brani preferiti, accumula tempo e scala la classifica di VibePlayer.</p>
+        
+        <a href="https://vibeplayer.github.io/VibePlayer/" class="cta-button">
+            <i class="fas fa-play" style="margin-right: 10px;"></i> Torna al Player
+        </a>
+    </div>
+
+    <div class="leaderboard-title">I Signori del Tempo</div>
+    
+    <div id="loading">Sincronizzazione campioni...</div>
+    <div class="top-three" id="leaderboard"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://mgofkzcnppsydkknbuhw.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_2M3gFEEjJLz2y_uHTUodMQ_XygN_O7s'; 
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function formatTime(val) {
+            const sec = Number(val) || 0;
+            if (sec <= 0) return "0s";
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const r = sec % 60;
+            if (h > 0) return h + "h " + m + "m";
+            if (m > 0) return m + "m " + r + "s";
+            return r + "s";
+        }
+
+        async function fetchLeaderboard() {
+            try {
+                // Scarichiamo tutti gli utenti per non perderne nessuno
+                const { data, error } = await sb
+                    .from('users')
+                    .select('*');
+                
+                if (error) throw error;
+
+                // Ordiniamo lato client per essere sicuri della gestione dei valori numerici
+                const sorted = data.sort((a, b) => {
+                    const timeA = Number(a.listening_seconds || 0);
+                    const timeB = Number(b.listening_seconds || 0);
+                    return timeB - timeA;
+                }).slice(0, 3);
+
+                const container = document.getElementById('leaderboard');
+                const loading = document.getElementById('loading');
+                if (loading) loading.style.display = 'none';
+                container.innerHTML = '';
+
+                sorted.forEach((user, index) => {
+                    const pos = index + 1;
+                    const seconds = user.listening_seconds || 0;
+                    
+                    const card = document.createElement('div');
+                    card.className = "rank-card pos-" + pos;
+                    
+                    card.innerHTML = `
+                        <div class="rank-info">
+                            <div class="rank-number">${pos}</div>
+                            <div class="rank-name">
+                                ${user.username || 'Anonimo'} 
+                                ${pos === 1 ? '<i class="fas fa-clock"></i>' : ''}
+                            </div>
+                        </div>
+                        <div class="rank-count">${formatTime(seconds)}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        fetchLeaderboard();
+        setInterval(fetchLeaderboard, 10000);
+    </script>
+</body>
+</html>
