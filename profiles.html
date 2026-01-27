@@ -17,6 +17,7 @@
             --text-sub: #a1a1a6;
             --creator-gold: #FFD700;
             --music-red: #FF3131;
+            --time-blue: #007aff;
         }
 
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -24,7 +25,7 @@
 
         .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; transition: opacity 0.3s; }
 
-        /* HEADER & SEARCH */
+        /* HEADER */
         .header h1 { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -1px; }
         .search-box { position: relative; margin: 20px 0; }
         .search-box input {
@@ -32,7 +33,6 @@
             background: var(--card-bg); border: 1px solid #222; border-radius: 14px;
             color: white; font-size: 16px; outline: none; transition: 0.2s;
         }
-        .search-box input:focus { border-color: var(--accent); background: #1a1a1c; }
         .search-box i { position: absolute; left: 16px; top: 16px; color: var(--text-sub); }
 
         /* GRID */
@@ -47,7 +47,12 @@
         .card-info { padding: 12px; }
         .card-name { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; }
 
-        /* FULL PAGE PROFILE VIEW */
+        /* ICONE BADGE */
+        .crown { color: var(--creator-gold); }
+        .music-note { color: var(--music-red); }
+        .time-clock { color: var(--time-blue); }
+
+        /* PROFILE VIEW */
         #profile-view {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-color); z-index: 9999;
@@ -82,16 +87,11 @@
             background: var(--card-bg); padding: 20px; border-radius: 22px;
             text-align: center; border: 1px solid #1c1c1e;
         }
-        .stat-value { display: block; font-size: 22px; font-weight: 800; color: #ffffff; }
-        /* TESTO BIANCO RICHIESTO */
+        .stat-value { display: block; font-size: 20px; font-weight: 800; color: #ffffff; }
         .stat-label { font-size: 11px; color: #ffffff; text-transform: uppercase; margin-top: 6px; font-weight: 700; opacity: 0.8; letter-spacing: 0.5px; }
 
         .bio-section { width: 100%; margin-top: 30px; color: var(--text-sub); line-height: 1.6; text-align: center; font-size: 15px; }
         .join-date { font-size: 11px; color: #444; margin-top: auto; padding-bottom: 40px; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* BADGES COLORATI */
-        .crown { color: var(--creator-gold); filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3)); }
-        .music-note { color: var(--music-red); filter: drop-shadow(0 0 5px rgba(255, 49, 49, 0.3)); }
         
         #loading { padding: 50px; text-align: center; color: var(--text-sub); font-weight: 600; }
     </style>
@@ -114,30 +114,21 @@
     <button class="back-btn" onclick="closeProfile()">
         <i class="fas fa-chevron-left"></i>
     </button>
-    
-    <div class="profile-header">
-        <img src="" id="p-banner" class="profile-banner">
-    </div>
-
+    <div class="profile-header"><img src="" id="p-banner" class="profile-banner"></div>
     <div class="profile-content">
         <img src="" id="p-avatar" class="main-avatar">
         <div class="profile-name" id="p-name"></div>
-        
         <div class="stats-row">
             <div class="stat-card">
                 <span class="stat-value" id="p-song-count">0</span>
                 <span class="stat-label">Brani</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value" id="p-rank">Membro</span>
+                <span class="stat-value" id="p-rank-label">Membro</span>
                 <span class="stat-label">Rango</span>
             </div>
         </div>
-
-        <div class="bio-section">
-            Benvenuto nel mio profilo ufficiale su VibePlayer. Esplora la mia musica e resta sintonizzato.
-        </div>
-
+        <div class="bio-section">Profilo ufficiale su VibePlayer. Esplora la musica e scala la classifica.</div>
         <div class="join-date" id="p-date"></div>
     </div>
 </div>
@@ -149,6 +140,7 @@
 
     let usersData = [];
     let absoluteMaxSongs = 0;
+    let absoluteMaxTime = 0;
 
     async function loadData() {
         try {
@@ -162,19 +154,12 @@
                 return { ...u, songCount: count };
             });
 
-            // Calcolo record globale
+            // Calcolo record
             absoluteMaxSongs = usersData.length > 0 ? Math.max(...usersData.map(u => u.songCount)) : 0;
+            absoluteMaxTime = usersData.length > 0 ? Math.max(...usersData.map(u => Number(u.listening_seconds || 0))) : 0;
             
             document.getElementById('loading').style.display = 'none';
             renderGrid(usersData);
-
-            // LOGICA /ID: Apre il profilo se l'URL contiene uno username esistente
-            const path = window.location.pathname.substring(1);
-            if(path) {
-                const user = usersData.find(u => u.username.toLowerCase() === decodeURIComponent(path).toLowerCase());
-                if(user) openProfile(user);
-            }
-
         } catch (e) { console.error(e); }
     }
 
@@ -183,7 +168,8 @@
         grid.innerHTML = '';
         data.forEach(user => {
             const isCreator = user.username === "୧ ‧₊˚Dany🍂☁️";
-            const isTop = user.songCount === absoluteMaxSongs && absoluteMaxSongs > 0;
+            const isTopMusic = user.songCount === absoluteMaxSongs && absoluteMaxSongs > 0;
+            const isTopTime = Number(user.listening_seconds || 0) === absoluteMaxTime && absoluteMaxTime > 0;
             const img = user.avatar_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`;
 
             const card = document.createElement('div');
@@ -195,7 +181,8 @@
                     <div class="card-name">
                         ${user.username}
                         ${isCreator ? '<i class="fas fa-crown crown" style="font-size:12px"></i>' : ''}
-                        ${isTop ? '<i class="fas fa-music music-note" style="font-size:12px"></i>' : ''}
+                        ${isTopMusic ? '<i class="fas fa-music music-note" style="font-size:12px"></i>' : ''}
+                        ${isTopTime ? '<i class="fas fa-clock time-clock" style="font-size:12px"></i>' : ''}
                     </div>
                 </div>
             `;
@@ -205,24 +192,32 @@
 
     function openProfile(user) {
         const isCreator = user.username === "୧ ‧₊˚Dany🍂☁️";
-        const isTop = user.songCount === absoluteMaxSongs && absoluteMaxSongs > 0;
+        const isTopMusic = user.songCount === absoluteMaxSongs && absoluteMaxSongs > 0;
+        const isTopTime = Number(user.listening_seconds || 0) === absoluteMaxTime && absoluteMaxTime > 0;
         const img = user.avatar_url || `https://ui-avatars.com/api/?name=${user.username}&background=random`;
         
-        // Popolamento dati
         document.getElementById('p-avatar').src = img;
         document.getElementById('p-banner').src = img;
         document.getElementById('p-name').innerHTML = `
             ${user.username}
             ${isCreator ? '<i class="fas fa-crown crown"></i>' : ''}
-            ${isTop ? '<i class="fas fa-music music-note"></i>' : ''}
+            ${isTopMusic ? '<i class="fas fa-music music-note"></i>' : ''}
+            ${isTopTime ? '<i class="fas fa-clock time-clock"></i>' : ''}
         `;
         document.getElementById('p-song-count').innerText = user.songCount;
-        document.getElementById('p-rank').innerText = isCreator ? 'Creatore' : (isTop ? 'Top Artist' : 'Membro');
+        
+        // Gestione Ruoli Dinamici
+        let roles = [];
+        if (isCreator) roles.push('Creatore');
+        if (isTopMusic) roles.push('Top Artist');
+        if (isTopTime) roles.push('Maestro del Tempo');
+        if (roles.length === 0) roles.push('Membro');
+        
+        document.getElementById('p-rank-label').innerText = roles.join(' & ');
         
         const d = new Date(user.created_at);
         document.getElementById('p-date').innerText = `Membro dal ${d.toLocaleDateString('it-IT', {month:'long', year:'numeric'})}`;
 
-        // Animazione apertura
         const view = document.getElementById('profile-view');
         view.style.display = 'flex';
         setTimeout(() => view.classList.add('active'), 10);
@@ -245,6 +240,5 @@
 
     loadData();
 </script>
-
 </body>
 </html>
